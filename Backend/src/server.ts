@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors"; // Import CORS
+import cookieParser from "cookie-parser"; // Import cookie-parser
 import routes from "./routes/index"; // Import your routes
-import connectDB from "./DB/MongoDB"; // Import the MongoDB connection module
+import connectDB from "./DB/MongoDB"; // MongoDB connection
 
 const app = express();
 
@@ -9,17 +10,23 @@ const app = express();
 connectDB();
 
 // Define the port
-const port = process.env.PORT || 7001; // Make sure to use the correct environment variable for the port
+const port = process.env.PORT || 7001;
 
 // Enable CORS for your application
 app.use(cors({
-    origin: "http://localhost:5173", // Replace with your frontend URL
-    methods: ["GET", "POST", "PUT", "DELETE"], // Specify allowed methods
-    credentials: true, // Enable credentials if needed
+    origin: "http://localhost:5173", // Your frontend URL
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true, // Allow credentials (cookies) in cross-origin requests
 }));
 
-app.use(express.json()); // Middleware to parse JSON bodies
-app.use("/api/v1/", routes); // Use your routes
+// Enable cookie parsing
+app.use(cookieParser()); // This should be before any routes that need `req.cookies`
+
+// Middleware to parse JSON bodies
+app.use(express.json()); // Parse JSON body in requests
+
+// Define routes
+app.use("/api/v1/", routes); // Use your routes for "/api/v1/"
 
 // Start the server
 app.listen(port, () => {

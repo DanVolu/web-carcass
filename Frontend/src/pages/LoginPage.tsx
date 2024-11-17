@@ -17,7 +17,7 @@ const LoginPage: React.FC = () => {
     setError(null);
 
     try {
-      const response = await axios.post("http://localhost:7000/api/v1/auth/login", { email, password });
+      const response = await axios.post("http://localhost:7000/api/v1/auth/login", { email, password },      { withCredentials: true } );
 
       if (response.status === 200) {
         setUser(email); // Update the global user state

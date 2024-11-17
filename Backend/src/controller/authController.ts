@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import User  from "../models/userModel";
+import User from "../models/userModel";
 import { generateToken, TokenInterface } from "../utils/token";
 
 interface RegisterInterface {
@@ -79,7 +79,7 @@ const authControllers = {
       }
   
       // Generate JWT token
-      const token = generateToken(email, user.email, user.roles);
+      const token = generateToken(user.email, user.username, user.roles); // Use user.email instead of hardcoded value
   
       // Set JWT as a cookie
       const isProduction = process.env.NODE_ENV === "production";
@@ -99,11 +99,10 @@ const authControllers = {
     }
   },
   
-
   //^ POST /api/v1/auth/logout - Clear the JWT cookie
   logout: async (_req: Request, res: Response, next: NextFunction) => {
     try {
-      res.clearCookie("jwt");
+      res.clearCookie("jwt"); // Remove the JWT cookie
       res.status(200).json({
         message: "Logout successful",
       });
@@ -114,7 +113,7 @@ const authControllers = {
 
   //^ GET /api/v1/auth/status - Check if user is logged in
   status: async (req: Request, res: Response, next: NextFunction) => {
-    const token = req.cookies.jwt;
+    const token = req.cookies.jwt; // Read the cookie
 
     try {
       if (!token) {
@@ -124,7 +123,7 @@ const authControllers = {
         });
       }
 
-      // Decode the JWT payload without verifying the signature
+      // Decode the token (without verifying the signature)
       const decoded = jwt.decode(token) as TokenInterface;
 
       // Ensure the decoded token contains the necessary information
@@ -135,7 +134,7 @@ const authControllers = {
         });
       }
 
-      // Retrieve user information from the database
+      // Retrieve user information from the database based on decoded token
       const user = await User.findOne({ email: decoded.email });
       if (!user) {
         return res.status(404).json({
@@ -147,7 +146,7 @@ const authControllers = {
       res.status(200).json({
         message: "Successfully authenticated",
         authorized: true,
-        data: user,
+        data: user, // Include user data like email and username
       });
     } catch (err) {
       next(err);

@@ -1,6 +1,7 @@
 import React, { useContext, useState } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom"; // Add Link from react-router-dom
+import axios from "axios"; // Import axios for making requests
 
 const Navbar: React.FC = () => {
   const { user, setUser } = useContext(AuthContext);
@@ -8,14 +9,21 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("token"); // Clear token from storage
-    setUser(null); // Reset user context
-    navigate("/login"); // Redirect to login page
+    // Make the request to the logout API to clear the JWT cookie
+    axios
+      .post("http://localhost:7000/api/v1/auth/logout", {}, { withCredentials: true }) // Include cookies with the request
+      .then(() => {
+        setUser(null); // Clear the user from context
+        navigate("/login"); // Redirect to login page
+      })
+      .catch((error) => {
+        console.error("Error logging out:", error);
+      });
   };
 
   return (
     <nav className="flex justify-between items-center px-6 py-4 bg-blue-600 text-white relative">
-      <h1 className="text-lg font-bold">MyApp</h1>
+      <Link to={"/"} className="text-lg font-bold">MyApp</Link>
       <div className="flex items-center gap-4">
         {/* Link to Settings Page */}
         {user && (
