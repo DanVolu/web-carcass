@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
 import User, { UserInterface } from "../models/userModel";
+import jwt from "jsonwebtoken";
 
 interface RegisterRequest {
   username: string;
@@ -70,10 +71,15 @@ const authControllers = {
         });
       }
 
-      // No JWT token is generated or returned here
+      // Generate a JWT token (you need a secret key in .env, e.g., JWT_SECRET)
+      const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, {
+        expiresIn: "1h", // Token expires in 1 hour
+      });
+
       res.status(200).json({
         message: "Login successful",
-        user: { email: user.email, username: user.username } // Send user info if needed
+        token, // Send the token to the frontend
+        user: { email: user.email, username: user.username },
       });
     } catch (err) {
       next(err);
@@ -95,6 +101,43 @@ const authControllers = {
     res.status(200).json({
       message: "No authentication implemented.",
     });
+  },
+
+  // New 'me' endpoint to get the currently authenticated user's details
+  me: async (req: Request, res: Response, next: NextFunction) => {
+    const token = req.headers.authorization?.split(" ")[1]; // Extract token from the 'Authorization' header
+
+    if (!token) {
+      return res.status(401).json({
+        message: "No token provided",
+      });
+    }
+
+    try {
+      // Verify token and extract the user ID
+      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
+
+      // Find the user using the extracted user ID
+      const user = await User.findById(decoded.id);
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+
+      // Send the user's email and nickname (you can add other fields as needed)
+      res.status(200).json({
+        email: user.email,
+        nickname: user.username, // Assuming 'username' is used as 'nickname' here
+      });
+
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+      return res.status(500).json({
+        message: "Internal server error",
+      });
+    }
   },
 };
 

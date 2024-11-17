@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../contexts/AuthContext"; // Ensure AuthContext is created
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -8,6 +9,7 @@ const LoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { setIsLoggedIn } = useContext(AuthContext); // Use AuthContext for global login state
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,13 +25,18 @@ const LoginPage: React.FC = () => {
 
       // Handle successful login
       if (response.status === 200) {
-        // Store the token in localStorage (optional)
-        localStorage.setItem('token', response.data.token); // Ensure your API returns a token
-        navigate("/register"); // Redirect to the register page after successful login
+        const { token } = response.data; // Ensure your backend returns the token
+        localStorage.setItem("token", token); // Store token in localStorage
+        setIsLoggedIn(true); // Update global auth state
+        navigate("/"); // Redirect to the homepage
       }
     } catch (err: any) {
       // Handle error response
-      if (err.response?.data?.message) {
+      if (err.response?.data?.errors) {
+        // If validation errors are returned
+        setError(err.response.data.errors.map((error: any) => error.msg).join(", "));
+      } else if (err.response?.data?.message) {
+        // Handle other error messages
         setError(err.response.data.message);
       } else {
         setError("An error occurred. Please try again.");
@@ -75,7 +82,7 @@ const LoginPage: React.FC = () => {
             disabled={loading}
             className="w-full py-2 mt-4 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
         <p className="text-sm text-center text-gray-600">

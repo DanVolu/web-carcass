@@ -36,7 +36,11 @@ const RegisterPage: React.FC = () => {
       }
     } catch (err: any) {
       // Handle error response
-      if (err.response?.data?.message) {
+      if (err.response?.data?.errors) {
+        // If validation errors are returned
+        setError(err.response.data.errors.map((error: any) => error.msg).join(", "));
+      } else if (err.response?.data?.message) {
+        // Handle other error messages
         setError(err.response.data.message);
       } else {
         setError("An error occurred. Please try again.");
