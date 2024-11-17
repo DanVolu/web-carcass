@@ -1,41 +1,47 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
-import User, { UserInterface } from "../models/userModel";
 import jwt from "jsonwebtoken";
+import User  from "../models/userModel";
+import { generateToken, TokenInterface } from "../utils/token";
 
-interface RegisterRequest {
+interface RegisterInterface {
   username: string;
   email: string;
   password: string;
   repeat_password: string;
 }
 
-interface LoginRequest {
+interface LoginInterface {
   email: string;
   password: string;
 }
 
 const authControllers = {
+  //^ POST /api/v1/auth/register - Register a new user
   register: async (req: Request, res: Response, next: NextFunction) => {
-    const { username, email, password, repeat_password }: RegisterRequest = req.body;
+    const { username, email, password, repeat_password }: RegisterInterface = req.body;
 
     try {
-      const existingUser: UserInterface | null = await User.findOne({ email });
-      if (existingUser) {
-        return res.status(400).json({
-          message: "User with this email already exists.",
-        });
-      }
-
+      // Ensure passwords match
       if (password !== repeat_password) {
         return res.status(400).json({
           message: "Passwords do not match.",
         });
       }
 
-      const hashedPassword: string = await bcrypt.hash(password, 10);
+      // Check if the user already exists
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({
+          message: "User with this email already exists.",
+        });
+      }
 
-      const newUser: UserInterface = new User({
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create and save the new user
+      const newUser = new User({
         username,
         email,
         password: hashedPassword,
@@ -44,50 +50,60 @@ const authControllers = {
       await newUser.save();
 
       res.status(201).json({
-        message: "Registration successful.",
-      });
-      
-    } catch (err: unknown) {
-      next(err);
-    }
-  },
-
-  login: async (req: Request, res: Response, next: NextFunction) => {
-    const { email, password }: LoginRequest = req.body;
-
-    try {
-      const user: UserInterface | null = await User.findOne({ email });
-
-      if (!user) {
-        return res.status(401).json({
-          message: "Invalid credentials: Provided email is not registered",
-        });
-      }
-
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(401).json({
-          message: "Invalid credentials: Incorrect password",
-        });
-      }
-
-      // Generate a JWT token (you need a secret key in .env, e.g., JWT_SECRET)
-      const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, {
-        expiresIn: "1h", // Token expires in 1 hour
-      });
-
-      res.status(200).json({
-        message: "Login successful",
-        token, // Send the token to the frontend
-        user: { email: user.email, username: user.username },
+        message: "Registration successful. Please verify your email.",
       });
     } catch (err) {
       next(err);
     }
   },
 
+  //^ POST /api/v1/auth/login - Authenticate user and issue JWT
+  login: async (req: Request, res: Response, next: NextFunction) => {
+    const { email, password }: LoginInterface = req.body;
+  
+    try {
+      // Check if user exists
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(401).json({
+          message: "Invalid credentials: Provided email is not registered",
+        });
+      }
+  
+      // Verify the password
+      const isPasswordCorrect = await bcrypt.compare(password, user.password);
+      if (!isPasswordCorrect) {
+        return res.status(401).json({
+          message: "Invalid credentials: Incorrect password",
+        });
+      }
+  
+      // Generate JWT token
+      const token = generateToken(email, user.email, user.roles);
+  
+      // Set JWT as a cookie
+      const isProduction = process.env.NODE_ENV === "production";
+      res.cookie("jwt", token, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "strict",
+      });
+  
+      // Return token in the response body
+      res.status(200).json({
+        message: "Login successful",
+        token, // Include the token in the response
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+  
+
+  //^ POST /api/v1/auth/logout - Clear the JWT cookie
   logout: async (_req: Request, res: Response, next: NextFunction) => {
     try {
+      res.clearCookie("jwt");
       res.status(200).json({
         message: "Logout successful",
       });
@@ -96,47 +112,45 @@ const authControllers = {
     }
   },
 
+  //^ GET /api/v1/auth/status - Check if user is logged in
   status: async (req: Request, res: Response, next: NextFunction) => {
-    // Status function is not needed without authentication
-    res.status(200).json({
-      message: "No authentication implemented.",
-    });
-  },
-
-  // New 'me' endpoint to get the currently authenticated user's details
-  me: async (req: Request, res: Response, next: NextFunction) => {
-    const token = req.headers.authorization?.split(" ")[1]; // Extract token from the 'Authorization' header
-
-    if (!token) {
-      return res.status(401).json({
-        message: "No token provided",
-      });
-    }
+    const token = req.cookies.jwt;
 
     try {
-      // Verify token and extract the user ID
-      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string };
-
-      // Find the user using the extracted user ID
-      const user = await User.findById(decoded.id);
-
-      if (!user) {
-        return res.status(404).json({
-          message: "User not found",
+      if (!token) {
+        return res.status(401).json({
+          message: "Unauthorized",
+          authorized: false,
         });
       }
 
-      // Send the user's email and nickname (you can add other fields as needed)
-      res.status(200).json({
-        email: user.email,
-        nickname: user.username, // Assuming 'username' is used as 'nickname' here
-      });
+      // Decode the JWT payload without verifying the signature
+      const decoded = jwt.decode(token) as TokenInterface;
 
-    } catch (err) {
-      console.error("Error fetching user data:", err);
-      return res.status(500).json({
-        message: "Internal server error",
+      // Ensure the decoded token contains the necessary information
+      if (!decoded || !decoded.email) {
+        return res.status(401).json({
+          message: "Invalid token",
+          authorized: false,
+        });
+      }
+
+      // Retrieve user information from the database
+      const user = await User.findOne({ email: decoded.email });
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+          authorized: false,
+        });
+      }
+
+      res.status(200).json({
+        message: "Successfully authenticated",
+        authorized: true,
+        data: user,
       });
+    } catch (err) {
+      next(err);
     }
   },
 };

@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../contexts/AuthContext"; // Ensure AuthContext is created
+import { useNavigate, Link } from "react-router-dom"; // Import Link for navigation
+import { AuthContext } from "../contexts/AuthContext";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -9,7 +9,7 @@ const LoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { setIsLoggedIn } = useContext(AuthContext); // Use AuthContext for global login state
+  const { setUser } = useContext(AuthContext);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,77 +17,61 @@ const LoginPage: React.FC = () => {
     setError(null);
 
     try {
-      // Send POST request to the login endpoint
-      const response = await axios.post("http://localhost:7000/api/v1/auth/login", {
-        email,
-        password,
-      });
+      const response = await axios.post("http://localhost:7000/api/v1/auth/login", { email, password });
 
-      // Handle successful login
       if (response.status === 200) {
-        const { token } = response.data; // Ensure your backend returns the token
-        localStorage.setItem("token", token); // Store token in localStorage
-        setIsLoggedIn(true); // Update global auth state
-        navigate("/"); // Redirect to the homepage
+        setUser(email); // Update the global user state
+        navigate("/"); // Redirect to homepage
       }
     } catch (err: any) {
-      // Handle error response
-      if (err.response?.data?.errors) {
-        // If validation errors are returned
-        setError(err.response.data.errors.map((error: any) => error.msg).join(", "));
-      } else if (err.response?.data?.message) {
-        // Handle other error messages
-        setError(err.response.data.message);
-      } else {
-        setError("An error occurred. Please try again.");
-      }
+      setError(err.response?.data?.message || "An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-100 dark:bg-zinc-700">
-      <div className="w-full max-w-md p-8 space-y-6 bg-slate-200 dark:bg-zinc-800 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center text-black dark:text-white">Login</h2>
-
-        {/* Display error message */}
-        {error && <div className="text-red-500 text-center">{error}</div>}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold text-center">Login</h2>
+        {error && <div className="text-red-500 text-center mt-2">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-4 mt-6">
           <div>
-            <label className="block text-sm font-medium text-black dark:text-white">Email:</label>
+            <label className="block text-sm font-medium">Email</label>
             <input
               type="email"
-              name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full p-2 border border-slate-300 dark:border-zinc-950 bg-slate-50 dark:bg-zinc-900 text-black dark:text-white rounded-md focus:ring focus:ring-blue-300"
               required
+              className="w-full px-3 py-2 border rounded"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-black dark:text-white">Password:</label>
+            <label className="block text-sm font-medium">Password</label>
             <input
               type="password"
-              name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full p-2 border border-slate-300 dark:border-zinc-950 bg-slate-50 dark:bg-zinc-900 text-black dark:text-white rounded-md focus:ring focus:ring-blue-300"
               required
+              className="w-full px-3 py-2 border rounded"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 mt-4 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 text-white bg-blue-600 rounded hover:bg-blue-700"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-        <p className="text-sm text-center text-gray-600">
-          Don't have an account? <a href="/register" className="text-blue-600 hover:underline">Register here</a>
-        </p>
+        <div className="text-center mt-4">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{" "}
+            <Link to="/register" className="text-blue-600 hover:underline">
+              Register
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
