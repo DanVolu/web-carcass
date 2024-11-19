@@ -9,7 +9,7 @@ export default function ProtectedLayout() {
   useEffect(() => {
     if (!user) {
       // Redirect to login if user is not logged in
-      navigate("/login");
+      navigate("/");
     }
   }, [user, navigate]);
 

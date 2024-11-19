@@ -31,24 +31,35 @@ const Navbar: React.FC = () => {
             Settings
           </Link>
         )}
-        <div className="relative">
-          <div
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-white text-blue-600 cursor-pointer"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-          >
-            {user ? user.charAt(0).toUpperCase() : "?"}
-          </div>
-          {dropdownOpen && user && (
-            <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-md py-2">
-              <button
-                onClick={handleLogout}
-                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                Logout
-              </button>
+        
+        {/* Conditionally render login or user bubble */}
+        {user ? (
+          <div className="relative">
+            <div
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-white text-blue-600 cursor-pointer"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+            >
+              {user.charAt(0).toUpperCase()} {/* Display user initial */}
             </div>
-          )}
-        </div>
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-md py-2">
+                <button
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <Link
+            to="/login"
+            className="text-white hover:text-gray-300"
+          >
+            Login
+          </Link>
+        )}
       </div>
     </nav>
   );
