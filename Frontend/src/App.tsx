@@ -1,8 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./forms/LoginForm";
+import RegisterPage from "./forms/RegisterForm";
 import SettingsPage from "./pages/SettingsPage"; // Import the SettingsPage
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedLayout from "./layouts/ProtectedLayout"; // Import ProtectedLayout
