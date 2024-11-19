@@ -1,11 +1,17 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
+// Components
 import Navbar from "./components/Navbar";
-import LoginPage from "./forms/LoginForm";
-import RegisterPage from "./forms/RegisterForm";
-import SettingsPage from "./pages/SettingsPage"; // Import the SettingsPage
+
 import { AuthProvider } from "./contexts/AuthContext";
-import ProtectedLayout from "./layouts/ProtectedLayout"; // Import ProtectedLayout
+import ProtectedLayout from "./layouts/ProtectedLayout";
+
+// Pages Forms
+import MainPage from "./pages/HomePage";
+import LoginForm from "./forms/LoginForm";
+import RegisterForm from "./forms/RegisterForm";
+import SettingsPage from "./pages/SettingsPage";
 
 const App: React.FC = () => {
   return (
@@ -13,14 +19,13 @@ const App: React.FC = () => {
       <Router>
         <Navbar />
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/register" element={<RegisterForm />} />
 
           {/* Protect routes inside the ProtectedLayout */}
           <Route element={<ProtectedLayout />}>
-            <Route path="/" element={<div>Welcome to the Home Page!</div>} />
-            <Route path="/profile" element={<div>Profile Page</div>} /> {/* Example Protected Route */}
-            <Route path="/settings" element={<SettingsPage />} /> {/* New Settings Route */}
+            <Route path="/" element={<MainPage />} />
+            <Route path="/settings" element={<SettingsPage />} /> 
           </Route>
         </Routes>
       </Router>

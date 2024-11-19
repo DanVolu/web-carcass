@@ -1,128 +1,143 @@
+import axios from "axios";
 import React, { useState } from "react";
 
 const SettingsPage: React.FC = () => {
-  const [showPersonalInfo, setShowPersonalInfo] = useState(false);
-  const [showChangePassword, setShowChangePassword] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<any[]>([]); // State to store the user list
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      let response;
+      if (email) {
+        // If email is provided, make a specific API call
+        response = await axios.get(
+          `http://localhost:7000/api/v1/users/user/${email}`,
+          { withCredentials: true }
+        );
+      } else {
+        // Otherwise, fetch the entire user list
+        response = await axios.get("http://localhost:7000/api/v1/users/users", {
+          withCredentials: true,
+        });
+      }
+
+      console.log("API Response:", response.data);
+
+      if (response.status === 200) {
+        const users = Array.isArray(response.data.data)
+          ? response.data.data
+          : [response.data.data]; // Ensure a consistent array format
+        setUsers(users);
+      }
+    } catch (err: any) {
+      console.error("API Error:", err);
+      setError(err.response?.data?.message || "An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddAdmin = async (userEmail: string) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await axios.put(
+        `http://localhost:7000/api/v1/users/user/${userEmail}/add-admin`,
+        {}, // Empty body because roles are handled in the backend
+        { withCredentials: true }
+      );
+
+      if (response.status === 200) {
+        // Update the local state to reflect the change
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user.email === userEmail ? { ...user, roles: [...user.roles, "admin"] } : user
+          )
+        );
+      }
+    } catch (err: any) {
+      console.error("API Error:", err);
+      setError(err.response?.data?.message || "An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-md">
-        <h1 className="text-2xl font-semibold mb-6">Settings</h1>
+        <h1 className="text-2xl font-semibold mb-6">Admin Settings</h1>
 
-        {/* Personal Information Section */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-medium">Personal Information</h2>
-            <button
-              onClick={() => setShowPersonalInfo(!showPersonalInfo)}
-              className="text-blue-600"
-            >
-              {showPersonalInfo ? "Hide" : "Edit"}
-            </button>
+        <form onSubmit={handleSearch} className="space-y-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Search user by email (optional)"
+              className="w-full px-3 py-2 border rounded"
+            />
           </div>
-          {showPersonalInfo && (
-            <div className="mt-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                <input
-                  type="text"
-                  placeholder="Enter your full name"
-                  className="mt-1 w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email Address</label>
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="mt-1 w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
-              <button className="mt-4 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
-                Save Changes
-              </button>
-            </div>
-          )}
-        </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full px-3 py-2 text-white bg-blue-600 rounded hover:bg-blue-700"
+          >
+            {loading ? "Searching..." : "Search"}
+          </button>
+        </form>
 
-        {/* Change Password Section */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-medium">Change Password</h2>
-            <button
-              onClick={() => setShowChangePassword(!showChangePassword)}
-              className="text-blue-600"
-            >
-              {showChangePassword ? "Hide" : "Change"}
-            </button>
-          </div>
-          {showChangePassword && (
-            <div className="mt-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Current Password</label>
-                <input
-                  type="password"
-                  placeholder="Enter current password"
-                  className="mt-1 w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">New Password</label>
-                <input
-                  type="password"
-                  placeholder="Enter new password"
-                  className="mt-1 w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Confirm New Password</label>
-                <input
-                  type="password"
-                  placeholder="Confirm new password"
-                  className="mt-1 w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
-              <button className="mt-4 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
-                Change Password
-              </button>
-            </div>
-          )}
-        </div>
+        {error && <p className="text-red-500">{error}</p>}
 
-        {/* Notifications Settings Section */}
-        <div className="mb-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-medium">Notification Settings</h2>
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="text-blue-600"
-            >
-              {showNotifications ? "Hide" : "Configure"}
-            </button>
+        {/* Display the user list */}
+        {users.length > 0 ? (
+          <div className="mt-6">
+            <h2 className="text-lg font-semibold mb-4">User List</h2>
+            <table className="w-full border-collapse border border-gray-300">
+              <thead>
+                <tr>
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                    Email
+                  </th>
+                  <th className="border border-gray-300 px-4 py-2 text-left">
+                    Role
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user, index) => (
+                  <tr key={index}>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {user.email}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {user.roles.join(", ")}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      <button
+                        onClick={() => handleAddAdmin(user.email)}
+                        disabled={loading}
+                        className="w-full px-3 py-2 text-white bg-blue-600 rounded hover:bg-blue-700"
+                      >
+                        {loading ? "Adding..." : "Add admin"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          {showNotifications && (
-            <div className="mt-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Email Notifications
-                </label>
-                <input type="checkbox" className="mr-2" />
-                <span>Receive email notifications</span>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Push Notifications
-                </label>
-                <input type="checkbox" className="mr-2" />
-                <span>Enable push notifications</span>
-              </div>
-              <button className="mt-4 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
-                Save Notifications Settings
-              </button>
-            </div>
-          )}
-        </div>
+        ) : (
+          <p className="text-gray-600 mt-6">No users found.</p>
+        )}
       </div>
     </div>
   );

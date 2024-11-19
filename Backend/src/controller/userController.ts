@@ -18,7 +18,7 @@ const userControllers = {
 
   // Get a single user by email (or identifier)
   getUser: async (req: Request, res: Response, next: NextFunction) => {
-    const param: string | number = req.params.identifier;
+    const param: string = req.params.identifier;
     let user: UserInterface;
 
     try {
@@ -42,37 +42,26 @@ const userControllers = {
 
   // Add admin role to a user
   addAdmin: async (req: Request, res: Response, next: NextFunction) => {
-    const params: string | number = req.params.identifier;
+    const email = req.params.identifier;
 
     try {
-      let user: UserInterface;
-      user = await User.findOne({ email: params });
-
+      const user = await User.findOne({ email });
       if (!user) {
-        return res.status(404).json({ error: "User not found" });
+        return res.status(404).json({ message: "User not found" });
       }
 
-      // If the user is not already "verified" (has "user" role)
       if (!user.roles.includes("user")) {
-        return res.status(400).json({
-          message: "User is not verified",
-        });
+        return res.status(400).json({ message: "User is not verified" });
       }
 
-      // If the user is already an admin
       if (user.roles.includes("admin")) {
-        return res.status(400).json({
-          message: "User is already an admin",
-        });
+        return res.status(400).json({ message: "User is already an admin" });
       }
 
-      // Add "admin" role
       user.roles.push("admin");
       await user.save();
 
-      res.status(200).json({
-        message: "User added to administrator role successfully"
-      });
+      res.status(200).json({ message: "User added to administrator role successfully" });
     } catch (err) {
       next(err);
     }
@@ -80,30 +69,22 @@ const userControllers = {
 
   // Remove admin role from a user
   removeAdmin: async (req: Request, res: Response, next: NextFunction) => {
-    const params: string | number = req.params.identifier;
+    const email = req.params.identifier;
 
     try {
-      let user: UserInterface;
-      user = await User.findOne({ email: params });
-
+      const user = await User.findOne({ email });
       if (!user) {
-        return res.status(404).json({ error: "User not found" });
+        return res.status(404).json({ message: "User not found" });
       }
 
-      // If the user is not an admin
       if (!user.roles.includes("admin")) {
-        return res.status(400).json({
-          message: "User is not an admin",
-        });
+        return res.status(400).json({ message: "User is not an admin" });
       }
 
-      // Remove "admin" role
       user.roles = user.roles.filter((role: string) => role !== "admin");
       await user.save();
 
-      res.json({
-        message: "User removed from administrator role successfully",
-      });
+      res.status(200).json({ message: "User removed from administrator role successfully" });
     } catch (err) {
       next(err);
     }
@@ -112,14 +93,10 @@ const userControllers = {
   // Get all users with "admin" role
   getAdmins: async (_req: Request, res: Response, next: NextFunction) => {
     try {
-      const users: UserInterface[] = await User.find({
-        roles: { $in: ["admin"] }
-      });
+      const users = await User.find({ roles: { $in: ["admin"] } });
 
       if (!users.length) {
-        return res.status(400).json({
-          message: "No admins found",
-        });
+        return res.status(400).json({ message: "No admins found" });
       }
 
       res.status(200).json({
@@ -127,7 +104,7 @@ const userControllers = {
         message: "All Admins successfully retrieved",
         data: users,
       });
-    } catch (err: unknown) {
+    } catch (err) {
       next(err);
     }
   },
