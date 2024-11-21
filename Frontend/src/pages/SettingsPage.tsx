@@ -144,49 +144,6 @@ const SettingsPage: React.FC = () => {
 
         {error && <p className="text-red-500 text-center">{error}</p>}
 
-        {/* Display the user list */}
-        {users.length > 0 && (
-          <div className="mt-6">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">User List</h2>
-            <table className="w-full border-collapse table-auto rounded-lg shadow-md">
-              <thead className="bg-gray-200">
-                <tr>
-                  <th className="px-4 py-2 text-left text-sm text-gray-700">Email</th>
-                  <th className="px-4 py-2 text-left text-sm text-gray-700">Role</th>
-                  <th className="px-4 py-2 text-left text-sm text-gray-700">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="px-4 py-2">{user.email}</td>
-                    <td className="px-4 py-2">{user.roles.join(", ")}</td>
-                    <td className="px-4 py-2">
-                      {user.roles.includes("admin") ? (
-                        <button
-                          onClick={() => handleRemoveAdmin(user.email)}
-                          disabled={loading}
-                          className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-red-300 transition duration-200"
-                        >
-                          {loading ? "Removing..." : "Remove admin"}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleAddAdmin(user.email)}
-                          disabled={loading}
-                          className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 transition duration-200"
-                        >
-                          {loading ? "Adding..." : "Add admin"}
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
         {/* Admin List Toggle */}
         <div className="mt-6 text-center">
           <button
@@ -231,6 +188,51 @@ const SettingsPage: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Display the user list */}
+        {users.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">User List</h2>
+            <table className="w-full border-collapse table-auto rounded-lg shadow-md">
+              <thead className="bg-gray-200">
+                <tr>
+                  <th className="px-4 py-2 text-left text-sm text-gray-700">Email</th>
+                  <th className="px-4 py-2 text-left text-sm text-gray-700">Role</th>
+                  <th className="px-4 py-2 text-left text-sm text-gray-700">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user, index) => (
+                  <tr key={index} className="border-b">
+                    <td className="px-4 py-2">{user.email}</td>
+                    <td className="px-4 py-2">{user.roles.join(", ")}</td>
+                    <td className="px-4 py-2">
+                      {user.roles.includes("admin") ? (
+                        <button
+                          onClick={() => handleRemoveAdmin(user.email)}
+                          disabled={loading}
+                          className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-red-300 transition duration-200"
+                        >
+                          {loading ? "Removing..." : "Remove admin"}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleAddAdmin(user.email)}
+                          disabled={loading}
+                          className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-blue-300 transition duration-200"
+                        >
+                          {loading ? "Adding..." : "Add admin"}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        
       </div>
     </div>
   );
