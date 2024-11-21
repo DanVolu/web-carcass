@@ -10,7 +10,7 @@ const app = express();
 connectDB();
 
 // Define the port
-const port = process.env.PORT || 7001;
+const port = process.env.PORT || 7000;
 
 // Enable CORS for your application
 app.use(cors({
