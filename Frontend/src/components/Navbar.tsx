@@ -1,20 +1,19 @@
 import React, { useContext, useState } from "react";
 import { AuthContext } from "../contexts/AuthContext";
-import { useNavigate, Link } from "react-router-dom"; // Add Link from react-router-dom
-import axios from "axios"; // Import axios for making requests
+import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
 
 const Navbar: React.FC = () => {
-  const { user, setUser } = useContext(AuthContext);
+  const { user, roles, setUser } = useContext(AuthContext);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Make the request to the logout API to clear the JWT cookie
     axios
-      .post("http://localhost:7000/api/v1/auth/logout", {}, { withCredentials: true }) // Include cookies with the request
+      .post("http://localhost:7000/api/v1/auth/logout", {}, { withCredentials: true })
       .then(() => {
         setUser(null); // Clear the user from context
-        navigate("/login"); // Redirect to login page
+        navigate("/login");
       })
       .catch((error) => {
         console.error("Error logging out:", error);
@@ -25,13 +24,13 @@ const Navbar: React.FC = () => {
     <nav className="flex justify-between items-center px-6 py-4 bg-blue-600 text-white relative">
       <Link to={"/"} className="text-lg font-bold">MyApp</Link>
       <div className="flex items-center gap-4">
-        {/* Link to Settings Page */}
-        {user && (
+        {/* Render Settings only for admin users */}
+        {user && roles.includes("admin") && (
           <Link to="/settings" className="text-white hover:text-gray-300">
             Settings
           </Link>
         )}
-        
+
         {/* Conditionally render login or user bubble */}
         {user ? (
           <div className="relative">

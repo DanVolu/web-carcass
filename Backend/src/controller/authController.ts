@@ -50,7 +50,7 @@ const authControllers = {
       await newUser.save();
 
       res.status(201).json({
-        message: "Registration successful. Please verify your email.",
+        message: "Registration successful.",
       });
     } catch (err) {
       next(err);

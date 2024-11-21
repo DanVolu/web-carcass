@@ -25,7 +25,11 @@ const App: React.FC = () => {
           {/* Protect routes inside the ProtectedLayout */}
           <Route element={<ProtectedLayout />}>
             <Route path="/" element={<MainPage />} />
-            <Route path="/settings" element={<SettingsPage />} /> 
+          </Route>
+
+          {/* Protect settings route for admin users */}
+          <Route element={<ProtectedLayout requiredRoles={["admin"]} />}>
+            <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Routes>
       </Router>
