@@ -22,7 +22,9 @@ const Navbar: React.FC = () => {
 
   return (
     <nav className="flex justify-between items-center px-6 py-4 bg-blue-600 text-white relative">
-      <Link to={"/"} className="text-lg font-bold">MyApp</Link>
+      <Link to={"/"} className="text-lg font-bold">
+        MyApp
+      </Link>
       <div className="flex items-center gap-4">
         {/* Product route, visible only if user is logged in */}
         {user && (
@@ -31,7 +33,7 @@ const Navbar: React.FC = () => {
           </Link>
         )}
 
-        {/* Render "Admin" or "Settings" only for admin users */}
+        {/* Settings visible to admins */}
         {user && roles.includes("admin") && (
           <Link to="/settings" className="text-white hover:text-gray-300">
             Settings
@@ -59,10 +61,7 @@ const Navbar: React.FC = () => {
             )}
           </div>
         ) : (
-          <Link
-            to="/login"
-            className="text-white hover:text-gray-300"
-          >
+          <Link to="/login" className="text-white hover:text-gray-300">
             Login
           </Link>
         )}
