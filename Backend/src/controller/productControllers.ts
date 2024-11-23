@@ -1,102 +1,68 @@
 import { Request, Response, NextFunction } from "express";
-import Product, { ProductInterface } from "../models/productModel";
+import Product from "../models/productModel";
 
 const productController = {
-  // View all products
-
-  getAllProducts: async (req: Request, res: Response, next: NextFunction) => {
+  getAllProducts: async (_req: Request, res: Response, next: NextFunction) => {
     try {
-      const products = await Product.find(); // Fetch all products from the database
-      res.status(200).json({ products });
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      next(error);
+      const products = await Product.find({});
+      res.status(200).json(products);
+    } catch (err) {
+      next(err);
     }
   },
-    
-  // Create a new product
-  createProduct: async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const { id, name, description, category, price, size, image, liked, options }: ProductInterface = req.body;
 
-      // Check if a product with the same ID already exists
-      const existingProduct = await Product.findOne({ id });
-      if (existingProduct) {
-        return res.status(400).json({ message: "Product with this ID already exists." });
+  addProduct: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      console.log("Incoming request body:", req.body); // Log the request payload
+  
+      const { name, description, category, price, size, image } = req.body;
+      const product = new Product({ name, description, category, price, size, image });
+  
+      const savedProduct = await product.save();
+      res.status(201).json(savedProduct);
+    } catch (err: any) {
+      console.error("Error saving product:", err); // Log the error
+      if (err.code === 11000) {
+        // Duplicate key error
+        return res.status(400).json({ message: "Duplicate value error", field: err.keyValue });
       }
-
-      // Create the new product
-      const newProduct = new Product({
-        id,
-        name,
-        description,
-        category,
-        price,
-        size,
-        image,
-        liked: liked || 0, // Default value for likes
-        options: options || [], // Default empty array for options
-      });
-
-      // Save to the database
-      const savedProduct = await newProduct.save();
-
-      res.status(201).json({
-        message: "Product created successfully",
-        product: savedProduct,
-      });
-    } catch (error) {
-      console.error("Error creating product:", error);
-      next(error);
+      if (err.name === "ValidationError") {
+        // Validation error
+        return res.status(400).json({ message: "Validation error", errors: err.errors });
+      }
+      next(err); // Forward other errors to the global error handler
     }
   },
+  
 
-  // Update an existing product
-  patchProduct: async (req: Request, res: Response, next: NextFunction) => {
+  editProduct: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params; // Get the product ID from the request parameters
-      const updates = req.body; // Get the fields to update from the request body
+      const { id } = req.params;
+      const updates = req.body;
 
-      // Find and update the product
-      const updatedProduct = await Product.findOneAndUpdate(
-        { id }, // Filter by product ID
-        updates, // Update fields
-        { new: true, runValidators: true } // Return the updated product and run validators
-      );
-
+      const updatedProduct = await Product.findByIdAndUpdate(id, updates, { new: true });
       if (!updatedProduct) {
-        return res.status(404).json({ message: "Product not found" });
+        return res.status(404).json({ message: "Product not found." });
       }
 
-      res.status(200).json({
-        message: "Product updated successfully",
-        product: updatedProduct,
-      });
-    } catch (error) {
-      console.error("Error updating product:", error);
-      next(error);
+      res.status(200).json(updatedProduct);
+    } catch (err) {
+      next(err);
     }
   },
 
-  // Delete a product
   deleteProduct: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { id } = req.params; // Get the product ID from the request parameters
+      const { id } = req.params;
 
-      // Find and delete the product
-      const deletedProduct = await Product.findOneAndDelete({ id });
-
+      const deletedProduct = await Product.findByIdAndDelete(id);
       if (!deletedProduct) {
-        return res.status(404).json({ message: "Product not found" });
+        return res.status(404).json({ message: "Product not found." });
       }
 
-      res.status(200).json({
-        message: "Product deleted successfully",
-        product: deletedProduct,
-      });
-    } catch (error) {
-      console.error("Error deleting product:", error);
-      next(error);
+      res.status(200).json({ message: "Product deleted successfully." });
+    } catch (err) {
+      next(err);
     }
   },
 };

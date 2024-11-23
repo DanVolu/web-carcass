@@ -1,17 +1,17 @@
 import express from "express";
 import productController from "../controller/productControllers";
+import { authenticate } from "../middlewares/authMiddleware";
+import productValidator from "../validations/productValidator";
 
 const router = express.Router();
 
 router.get("/products", productController.getAllProducts);
 
-// Route to create a product
-router.post("/products", productController.createProduct);
+// Apply validation middleware here
+router.post("/products", authenticate, productValidator.addOrEditProduct, productController.addProduct);
 
-// Route to update a product
-router.patch("/products/:id", productController.patchProduct);
+router.put("/products/:id", authenticate, productValidator.addOrEditProduct, productController.editProduct);
 
-// Route to delete a product
-router.delete("/products/:id", productController.deleteProduct);
+router.delete("/products/:id", authenticate, productController.deleteProduct);
 
 export default router;

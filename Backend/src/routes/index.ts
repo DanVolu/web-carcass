@@ -7,6 +7,7 @@ import loggerMiddleware from "../middlewares/loggerMiddleware"; // Logger middle
 
 const router = express.Router();
 
+
 // Apply loggerMiddleware to the users and auth routes (if needed)
 router.use("/users", loggerMiddleware, usersRoutes);
 router.use("/auth", loggerMiddleware, authRoutes);
