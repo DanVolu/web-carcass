@@ -45,6 +45,5 @@ coverage/
 *.bak
 *.backup
 
-# Ignore uploads folder content except .gitkeep
-uploads/*
-!uploads/.gitkeep
+# Ignore uploads folder
+uploads/
