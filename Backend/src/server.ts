@@ -3,6 +3,9 @@ import cors from "cors"; // Import CORS
 import cookieParser from "cookie-parser"; // Import cookie-parser
 import routes from "./routes/index"; // Import your routes
 import connectDB from "./DB/MongoDB"; // MongoDB connection
+import path from "path"; // Import path for static file serving
+import fs from "fs";
+
 
 const app = express();
 
@@ -24,6 +27,15 @@ app.use(cookieParser()); // This should be before any routes that need `req.cook
 
 // Middleware to parse JSON bodies
 app.use(express.json()); // Parse JSON body in requests
+
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir); // Create the uploads directory if it doesn't exist
+}
+
+
+// Serve static files from the uploads directory
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Define routes
 app.use("/api/v1/", routes); // Use your routes for "/api/v1/"
