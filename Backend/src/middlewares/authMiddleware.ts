@@ -1,6 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import User from "../models/userModel";
+import User, { UserInterface } from "../models/userModel";
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: UserInterface; // Add user type to Express Request
+    }
+  }
+}
 
 export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   const token = req.cookies.jwt;
@@ -21,7 +29,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     }
 
     console.log("Authenticated user:", user.email);
-    req.user = user;
+    req.user = user; // Attach user to req.user
     next();
   } catch (err) {
     console.error("Authentication error:", err);

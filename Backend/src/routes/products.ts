@@ -14,4 +14,8 @@ router.put("/products/:id", authenticate, productValidator.addOrEditProduct, pro
 
 router.delete("/products/:id", authenticate, productController.deleteProduct);
 
+router.post("/products/:id/like", authenticate, productController.likeProduct);
+router.post("/products/:id/unlike", authenticate, productController.unlikeProduct);
+
+
 export default router;

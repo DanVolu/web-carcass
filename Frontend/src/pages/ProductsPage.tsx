@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
+import { AuthContext } from "../contexts/AuthContext";
 
 interface Product {
   _id: string;
@@ -9,7 +10,8 @@ interface Product {
   price: number;
   size: string;
   image: string;
-  liked: number;
+  liked: number; // Total number of likes
+  usersLiked: string[]; // List of users who liked the product
 }
 
 interface ValidationError {
@@ -30,13 +32,15 @@ const ProductsPage: React.FC = () => {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [errors, setErrors] = useState<ValidationError[]>([]);
+  const { user } = useContext(AuthContext); // Get user from AuthContext
 
-  const apiUrl = "http://localhost:7000/api/v1/products";
+  const apiUrl = "http://localhost:7000/api/v1/products/products";
 
+  // Fetch products and user role
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data } = await axios.get(`${apiUrl}/products`, { withCredentials: true });
+        const { data } = await axios.get(apiUrl, { withCredentials: true });
         setProducts(data);
 
         const userResponse = await axios.get("http://localhost:7000/api/v1/auth/status", {
@@ -44,7 +48,7 @@ const ProductsPage: React.FC = () => {
         });
         setIsAdmin(userResponse.data.data.roles.includes("admin"));
       } catch (err) {
-        console.error("Error fetching products:", err);
+        console.error("Error fetching products or user data:", err);
       }
     };
 
@@ -62,12 +66,12 @@ const ProductsPage: React.FC = () => {
 
     try {
       if (editingId) {
-        await axios.put(`${apiUrl}/products/${editingId}`, payload, { withCredentials: true });
+        await axios.put(`${apiUrl}/${editingId}`, payload, { withCredentials: true });
       } else {
-        await axios.post(`${apiUrl}/products`, payload, { withCredentials: true });
+        await axios.post(apiUrl, payload, { withCredentials: true });
       }
 
-      const { data } = await axios.get(`${apiUrl}/products`, { withCredentials: true });
+      const { data } = await axios.get(apiUrl, { withCredentials: true });
       setProducts(data);
       setForm({ name: "", description: "", category: "", price: "", size: "", image: "" });
     } catch (err: any) {
@@ -81,10 +85,40 @@ const ProductsPage: React.FC = () => {
 
   const handleDeleteProduct = async (id: string) => {
     try {
-      await axios.delete(`${apiUrl}/products/${id}`, { withCredentials: true });
+      await axios.delete(`${apiUrl}/${id}`, { withCredentials: true });
       setProducts(products.filter((product) => product._id !== id));
     } catch (err) {
       console.error("Error deleting product:", err);
+    }
+  };
+
+  const handleLikeToggle = async (productId: string, isLiked: boolean) => {
+    try {
+      const endpoint = isLiked ? "unlike" : "like";
+      const { data } = await axios.post(
+        `${apiUrl}/${productId}/${endpoint}`,
+        {},
+        { withCredentials: true }
+      );
+
+      // Update the local state of the specific product
+      setProducts((prevProducts) =>
+        prevProducts.map((product) =>
+          product._id === productId
+            ? {
+                ...product,
+                liked: data.liked,
+                usersLiked: isLiked
+                  ? product.usersLiked.filter((email) => email !== user)
+                  : user
+                  ? [...product.usersLiked, user] // Ensure `user` is not null
+                  : product.usersLiked,
+              }
+            : product
+        )
+      );
+    } catch (err: any) {
+      console.error(`Error ${isLiked ? "unliking" : "liking"} product:`, err.response?.data?.message || err.message);
     }
   };
 
@@ -188,31 +222,49 @@ const ProductsPage: React.FC = () => {
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((product) => (
-          <div key={product._id} className="bg-white shadow-md rounded p-4">
-            <img src={product.image} alt={product.name} className="w-full h-48 object-cover mb-4" />
-            <h2 className="text-xl font-bold">{product.name}</h2>
-            <p className="text-gray-600">{product.category}</p>
-            <p className="text-gray-800 font-semibold">${product.price}</p>
-            <p className="text-sm text-gray-500">{product.description}</p>
-            {isAdmin && (
-              <div className="mt-4 flex justify-between">
-                <button
-                  className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
-                  onClick={() => startEditing(product)}
-                >
-                  Edit
-                </button>
-                <button
-                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                  onClick={() => handleDeleteProduct(product._id)}
-                >
-                  Delete
-                </button>
+        {products.map((product) => {
+          const isLiked = !!(user && product.usersLiked?.includes(user)); // Ensures `isLiked` is strictly boolean
+          return (
+            <div key={product._id} className="bg-white shadow-md rounded p-4">
+              <img src={product.image} alt={product.name} className="w-full h-48 object-cover mb-4" />
+              <h2 className="text-xl font-bold">{product.name}</h2>
+              <p className="text-gray-600">{product.category}</p>
+              <p className="text-gray-800 font-semibold">${product.price}</p>
+              <p className="text-sm text-gray-500">{product.description}</p>
+              <div className="flex items-center justify-between mt-4">
+                <p className="text-gray-700">Likes: {product.liked}</p>
+                {user ? (
+                  <button
+                    className={`px-4 py-2 rounded ${
+                      isLiked ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"
+                    } text-white`}
+                    onClick={() => handleLikeToggle(product._id, isLiked)}
+                  >
+                    {isLiked ? "Unlike" : "Like"}
+                  </button>
+                ) : (
+                  <p className="text-red-500">Log in to like products</p>
+                )}
               </div>
-            )}
-          </div>
-        ))}
+              {isAdmin && (
+                <div className="mt-4 flex justify-between">
+                  <button
+                    className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+                    onClick={() => startEditing(product)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                    onClick={() => handleDeleteProduct(product._id)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
