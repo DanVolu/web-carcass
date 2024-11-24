@@ -29,7 +29,7 @@ const ProductsPage: React.FC = () => {
     image: "",
   });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [errors, setErrors] = useState<ValidationError[]>([]); // New state for validation errors
+  const [errors, setErrors] = useState<ValidationError[]>([]);
 
   const apiUrl = "http://localhost:7000/api/v1/products";
 
@@ -57,8 +57,8 @@ const ProductsPage: React.FC = () => {
 
   const handleAddOrEditProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrors([]); // Clear previous errors
-    const payload = { ...form, price: parseFloat(form.price) }; // Ensure price is a number
+    setErrors([]);
+    const payload = { ...form, price: parseFloat(form.price) };
 
     try {
       if (editingId) {
@@ -74,7 +74,7 @@ const ProductsPage: React.FC = () => {
       console.error("Error saving product:", err);
 
       if (err.response && err.response.status === 400) {
-        setErrors(err.response.data.errors); // Capture validation errors
+        setErrors(err.response.data.errors);
       }
     }
   };
@@ -103,17 +103,17 @@ const ProductsPage: React.FC = () => {
   const cancelEditing = () => {
     setEditingId(null);
     setForm({ name: "", description: "", category: "", price: "", size: "", image: "" });
-    setErrors([]); // Clear errors
+    setErrors([]);
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <h1 className="text-3xl font-bold mb-4">Products</h1>
 
       {isAdmin && (
         <form className="bg-white shadow-md rounded p-4 mb-6" onSubmit={handleAddOrEditProduct}>
           <h2 className="text-xl font-bold mb-4">{editingId ? "Edit Product" : "Add Product"}</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               className="p-2 border rounded"
               name="name"
@@ -148,7 +148,7 @@ const ProductsPage: React.FC = () => {
               required
             />
             <input
-              className="p-2 border rounded"
+              className="p-2 border rounded col-span-1 md:col-span-2"
               name="image"
               value={form.image}
               onChange={handleInputChange}
@@ -187,7 +187,7 @@ const ProductsPage: React.FC = () => {
         </form>
       )}
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
           <div key={product._id} className="bg-white shadow-md rounded p-4">
             <img src={product.image} alt={product.name} className="w-full h-48 object-cover mb-4" />

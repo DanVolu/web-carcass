@@ -7,17 +7,17 @@ const RegisterForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string[]>([]); // Updated to handle multiple errors
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setErrors([]); // Clear errors before submission
 
     if (password !== repeatPassword) {
-      setError("Passwords do not match.");
+      setErrors(["Passwords do not match."]);
       setLoading(false);
       return;
     }
@@ -31,11 +31,16 @@ const RegisterForm: React.FC = () => {
       });
 
       if (response.status === 201) {
-        // Registration successful, redirect to login
         navigate("/login");
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "An error occurred. Please try again.");
+      if (err.response?.data?.errors) {
+        // Backend validation errors
+        setErrors(err.response.data.errors.map((error: any) => error.msg));
+      } else {
+        // General error
+        setErrors(["An error occurred. Please try again."]);
+      }
     } finally {
       setLoading(false);
     }
@@ -45,7 +50,13 @@ const RegisterForm: React.FC = () => {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
         <h2 className="text-2xl font-bold text-center">Register</h2>
-        {error && <div className="text-red-500 text-center mt-2">{error}</div>}
+        {errors.length > 0 && (
+          <div className="text-red-500 text-center mt-2">
+            {errors.map((error, index) => (
+              <p key={index}>{error}</p>
+            ))}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4 mt-6">
           <div>
             <label className="block text-sm font-medium">Username</label>
