@@ -31,6 +31,8 @@ const ProductsPage: React.FC = () => {
     image: null as File | null, // Handle file uploads
   });
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [popupProduct, setPopupProduct] = useState<Product | null>(null); // State for pop-up product
+  const [confirmDeleteProduct, setConfirmDeleteProduct] = useState<Product | null>(null); // State for delete confirmation
   const [, setErrors] = useState<ValidationError[]>([]);
   const { user } = useContext(AuthContext); // Get user from AuthContext
 
@@ -108,6 +110,7 @@ const ProductsPage: React.FC = () => {
     try {
       await axios.delete(`${apiUrl}/${id}`, { withCredentials: true });
       setProducts(products.filter((product) => product._id !== id));
+      setConfirmDeleteProduct(null); // Close the delete confirmation modal
     } catch (err) {
       console.error("Error deleting product:", err);
     }
@@ -156,6 +159,14 @@ const ProductsPage: React.FC = () => {
     setEditingId(null);
     setForm({ name: "", description: "", category: "", price: "", size: "", image: null });
     setErrors([]);
+  };
+
+  const openPopup = (product: Product) => {
+    setPopupProduct(product);
+  };
+
+  const closePopup = () => {
+    setPopupProduct(null);
   };
 
   return (
@@ -236,13 +247,17 @@ const ProductsPage: React.FC = () => {
         {products.map((product) => {
           const isLiked = !!(user && product.usersLiked?.includes(user));
           return (
-            <div key={product._id} className="bg-white shadow-md rounded p-4">
+            <div
+              key={product._id}
+              className="bg-white shadow-md rounded p-4 cursor-pointer"
+              onClick={() => openPopup(product)}
+            >
               <img
                 src={product.image.startsWith("/uploads/") 
                   ? `http://localhost:7000${product.image}` 
                   : product.image}
                 alt={product.name}
-                className="w-full h-48 object-cover mb-4"
+                className="w-full h-49 object-cover rounded mb-4"
                 onError={(e) => {
                   e.currentTarget.src = "https://via.placeholder.com/150"; // Fallback to placeholder
                 }}
@@ -250,6 +265,7 @@ const ProductsPage: React.FC = () => {
               <h2 className="text-xl font-bold">{product.name}</h2>
               <p className="text-gray-600">{product.category}</p>
               <p className="text-gray-800 font-semibold">€{product.price}</p>
+              <p className="text-gray-600">{product.size}</p>
               <p className="text-sm text-gray-500">{product.description}</p>
               <div className="flex items-center justify-between mt-4">
                 <p className="text-gray-700">Likes: {product.liked}</p>
@@ -258,7 +274,10 @@ const ProductsPage: React.FC = () => {
                     className={`px-4 py-2 rounded ${
                       isLiked ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"
                     } text-white`}
-                    onClick={() => handleLikeToggle(product._id, isLiked)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLikeToggle(product._id, isLiked);
+                    }}
                   >
                     {isLiked ? "Unlike" : "Like"}
                   </button>
@@ -270,13 +289,19 @@ const ProductsPage: React.FC = () => {
                 <div className="mt-4 flex justify-between">
                   <button
                     className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
-                    onClick={() => startEditing(product)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startEditing(product);
+                    }}
                   >
                     Edit
                   </button>
                   <button
                     className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                    onClick={() => handleDeleteProduct(product._id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmDeleteProduct(product);
+                    }}
                   >
                     Delete
                   </button>
@@ -286,6 +311,124 @@ const ProductsPage: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Delete Confirmation */}
+      {confirmDeleteProduct && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={() => setConfirmDeleteProduct(null)}
+        >
+          <div
+            className="bg-white p-6 rounded-lg shadow-lg relative max-w-md w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold mb-4">Delete Confirmation</h2>
+            <p className="mb-4">
+              Are you sure you want to delete <strong>{confirmDeleteProduct.name}</strong>?
+            </p>
+            <div className="flex justify-end gap-4">
+              <button
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                onClick={() => handleDeleteProduct(confirmDeleteProduct._id)}
+              >
+                Confirm
+              </button>
+              <button
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                onClick={() => setConfirmDeleteProduct(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pop-up Modal */}
+      {popupProduct && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={closePopup}
+        >
+          <div
+            className="bg-white p-6 rounded-lg shadow-lg relative max-w-lg w-full"
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
+          >
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
+              onClick={closePopup}
+            >
+              ✖
+            </button>
+            <img
+              src={popupProduct.image.startsWith("/uploads/") 
+                ? `http://localhost:7000${popupProduct.image}` 
+                : popupProduct.image}
+              alt={popupProduct.name}
+              className="w-full h-65 object-cover rounded mb-4"
+            />
+            <h2 className="text-xl font-bold mb-2">{popupProduct.name}</h2>
+            <p className="text-gray-600">{popupProduct.category}</p>
+            <p className="text-gray-800 font-semibold">€{popupProduct.price}</p>
+            <p className="text-gray-600">{popupProduct.size}</p>
+            <p className="text-sm text-gray-500">{popupProduct.description}</p>
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-gray-700">Likes: {popupProduct.liked}</p>
+              {user ? (
+                <button
+                  className={`px-4 py-2 rounded ${
+                    popupProduct.usersLiked.includes(user)
+                      ? "bg-red-500 hover:bg-red-600"
+                      : "bg-blue-500 hover:bg-blue-600"
+                  } text-white`}
+                  onClick={() => {
+                    handleLikeToggle(
+                      popupProduct._id,
+                      popupProduct.usersLiked.includes(user)
+                    );
+                    setPopupProduct((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            liked: popupProduct.usersLiked.includes(user)
+                              ? prev.liked - 1
+                              : prev.liked + 1,
+                            usersLiked: popupProduct.usersLiked.includes(user)
+                              ? prev.usersLiked.filter((email) => email !== user)
+                              : [...prev.usersLiked, user],
+                          }
+                        : null
+                    );
+                  }}
+                >
+                  {popupProduct.usersLiked.includes(user) ? "Unlike" : "Like"}
+                </button>
+              ) : (
+                <p className="text-red-500">Log in to like products</p>
+              )}
+            </div>
+            {isAdmin && (
+              <div className="mt-4 flex justify-between">
+                <button
+                  className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+                  onClick={() => startEditing(popupProduct)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                  onClick={() => {
+                    handleDeleteProduct(popupProduct._id);
+                    closePopup();
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
