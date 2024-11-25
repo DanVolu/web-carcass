@@ -40,7 +40,7 @@ const CartPage: React.FC = () => {
   const handleAddToCart = async (productId: string) => {
     try {
       await axios.post(
-        `${apiUrl}/add`,
+        `${apiUrl}/cart/add`,
         { productId, quantity: 1 },
         { withCredentials: true }
       );
@@ -109,7 +109,7 @@ const CartPage: React.FC = () => {
             <div className="flex space-x-4">
               <button
                 className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                onClick={() => handleAddToCart(item.productId)}
+                onClick={() =>  handleAddToCart(item.productId)}
               >
                 Add More
               </button>
