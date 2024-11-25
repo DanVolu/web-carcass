@@ -41,8 +41,15 @@ const ProductsPage: React.FC = () => {
     const fetchProducts = async () => {
       try {
         const { data } = await axios.get(apiUrl, { withCredentials: true });
-        setProducts(data);
-
+  
+        // Filter unique products by _id
+        const uniqueProducts = data.filter(
+          (product: Product, index: number, self: Product[]) =>
+            index === self.findIndex((p) => p._id === product._id)
+        );
+  
+        setProducts(uniqueProducts);
+  
         const userResponse = await axios.get("http://localhost:7000/api/v1/auth/status", {
           withCredentials: true,
         });
@@ -51,9 +58,10 @@ const ProductsPage: React.FC = () => {
         console.error("Error fetching products or user data:", err);
       }
     };
-
+  
     fetchProducts();
   }, []);
+  
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -62,23 +70,35 @@ const ProductsPage: React.FC = () => {
   const handleAddOrEditProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors([]);
+  
+    // Ensure `form.price` is a valid number
     const payload = { ...form, price: parseFloat(form.price) };
-
+    console.log("Payload being sent:", payload);
+  
     try {
       if (editingId) {
         await axios.put(`${apiUrl}/${editingId}`, payload, { withCredentials: true });
       } else {
         await axios.post(apiUrl, payload, { withCredentials: true });
       }
-
+  
+      // Fetch the updated product list
       const { data } = await axios.get(apiUrl, { withCredentials: true });
       setProducts(data);
+  
+      // Reset the form
       setForm({ name: "", description: "", category: "", price: "", size: "", image: "" });
     } catch (err: any) {
       console.error("Error saving product:", err);
-
+  
+      // Log server error details if available
+      if (err.response) {
+        console.log("Server response data:", err.response.data);
+      }
+  
+      // Handle validation errors
       if (err.response && err.response.status === 400) {
-        setErrors(err.response.data.errors);
+        setErrors(err.response.data.errors || ["Unknown error occurred."]);
       }
     }
   };
@@ -101,7 +121,6 @@ const ProductsPage: React.FC = () => {
         { withCredentials: true }
       );
 
-      // Update the local state of the specific product
       setProducts((prevProducts) =>
         prevProducts.map((product) =>
           product._id === productId
@@ -111,7 +130,7 @@ const ProductsPage: React.FC = () => {
                 usersLiked: isLiked
                   ? product.usersLiked.filter((email) => email !== user)
                   : user
-                  ? [...product.usersLiked, user] // Ensure `user` is not null
+                  ? [...product.usersLiked, user] // Ensure user is not null
                   : product.usersLiked,
               }
             : product
@@ -122,6 +141,21 @@ const ProductsPage: React.FC = () => {
     }
   };
 
+  const handleAddToCart = async (productId: string) => {
+    try {
+      await axios.post(
+        "http://localhost:7000/api/v1/cart/cart/add",
+        { productId, quantity: 1 },
+        { withCredentials: true }
+      );
+  
+      alert("Product added to cart successfully!");
+    } catch (err: any) {
+      console.error("Error adding product to cart:", err.response?.data?.message || err.message);
+      alert("Failed to add product to cart. Please try again.");
+    }
+  };
+  
   const startEditing = (product: Product) => {
     setEditingId(product._id);
     setForm({
@@ -140,16 +174,18 @@ const ProductsPage: React.FC = () => {
     setErrors([]);
   };
 
+
+
   return (
-    <div className="p-4 md:p-8">
-      <h1 className="text-3xl font-bold mb-4">Products</h1>
+    <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
+      <h1 className="text-3xl font-bold text-center text-gray-900 mb-8">Our Products</h1>
 
       {isAdmin && (
-        <form className="bg-white shadow-md rounded p-4 mb-6" onSubmit={handleAddOrEditProduct}>
-          <h2 className="text-xl font-bold mb-4">{editingId ? "Edit Product" : "Add Product"}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form className="bg-white shadow-lg rounded-lg p-6 mb-8 max-w-2xl mx-auto" onSubmit={handleAddOrEditProduct}>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">{editingId ? "Edit Product" : "Add Product"}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <input
-              className="p-2 border rounded"
+              className="p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               name="name"
               value={form.name}
               onChange={handleInputChange}
@@ -157,7 +193,7 @@ const ProductsPage: React.FC = () => {
               required
             />
             <input
-              className="p-2 border rounded"
+              className="p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               name="category"
               value={form.category}
               onChange={handleInputChange}
@@ -165,7 +201,7 @@ const ProductsPage: React.FC = () => {
               required
             />
             <input
-              className="p-2 border rounded"
+              className="p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               name="price"
               type="number"
               value={form.price}
@@ -174,7 +210,7 @@ const ProductsPage: React.FC = () => {
               required
             />
             <input
-              className="p-2 border rounded"
+              className="p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               name="size"
               value={form.size}
               onChange={handleInputChange}
@@ -182,7 +218,7 @@ const ProductsPage: React.FC = () => {
               required
             />
             <input
-              className="p-2 border rounded col-span-1 md:col-span-2"
+              className="p-3 border border-gray-300 rounded-lg shadow-sm col-span-1 md:col-span-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               name="image"
               value={form.image}
               onChange={handleInputChange}
@@ -190,7 +226,7 @@ const ProductsPage: React.FC = () => {
             />
           </div>
           <textarea
-            className="w-full p-2 border rounded mt-4"
+            className="w-full p-3 border border-gray-300 rounded-lg shadow-sm mt-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
             name="description"
             value={form.description}
             onChange={handleInputChange}
@@ -204,14 +240,17 @@ const ProductsPage: React.FC = () => {
               </p>
             ))}
           </div>
-          <div className="mt-4 flex justify-between">
-            <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          <div className="mt-6 flex justify-between items-center">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            >
               {editingId ? "Save Changes" : "Add Product"}
             </button>
             {editingId && (
               <button
                 type="button"
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors"
                 onClick={cancelEditing}
               >
                 Cancel
@@ -221,50 +260,74 @@ const ProductsPage: React.FC = () => {
         </form>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((product) => {
-          const isLiked = !!(user && product.usersLiked?.includes(user)); // Ensures `isLiked` is strictly boolean
-          return (
-            <div key={product._id} className="bg-white shadow-md rounded p-4">
-              <img src={product.image} alt={product.name} className="w-full h-48 object-cover mb-4" />
-              <h2 className="text-xl font-bold">{product.name}</h2>
-              <p className="text-gray-600">{product.category}</p>
-              <p className="text-gray-800 font-semibold">${product.price}</p>
-              <p className="text-sm text-gray-500">{product.description}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {products.map((product) => (
+          <div
+            key={product._id}
+            className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow flex flex-col justify-between"
+          >
+            <img
+              className="w-full h-48 object-cover rounded-md"
+              src={product.image}
+              alt={product.name}
+            />
+            <div className="mt-4 flex-grow">
+              <h2 className="text-xl font-semibold text-gray-800">{product.name}</h2>
+              <p className="text-gray-600 mt-2">{product.description}</p>
+              <p className="text-lg font-semibold text-green-600 mt-2">${product.price}</p>
+              <p className="text-sm text-gray-500 mt-1">Size: {product.size}</p>
+              <p className="text-sm text-gray-500">Category: {product.category}</p>
               <div className="flex items-center justify-between mt-4">
                 <p className="text-gray-700">Likes: {product.liked}</p>
                 {user ? (
                   <button
-                    className={`px-4 py-2 rounded ${
-                      isLiked ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"
-                    } text-white`}
-                    onClick={() => handleLikeToggle(product._id, isLiked)}
+                    className={`px-4 py-2 rounded-lg text-white ${product.usersLiked.includes(user)
+                      ? "bg-red-500 hover:bg-red-600"
+                      : "bg-blue-500 hover:bg-blue-600"}`}
+                    onClick={() => handleLikeToggle(product._id, product.usersLiked.includes(user))}
                   >
-                    {isLiked ? "Unlike" : "Like"}
+                    {product.usersLiked.includes(user) ? "Unlike" : "Like"}
                   </button>
                 ) : (
                   <p className="text-red-500">Log in to like products</p>
                 )}
               </div>
-              {isAdmin && (
-                <div className="mt-4 flex justify-between">
-                  <button
-                    className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
-                    onClick={() => startEditing(product)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                    onClick={() => handleDeleteProduct(product._id)}
-                  >
-                    Delete
-                  </button>
-                </div>
+            </div>
+          
+            {/* Flex container for Edit, Delete, and Add to Cart buttons */}
+            <div className="mt-4 flex justify-between items-center">
+              <div className="flex space-x-4">
+                {isAdmin && (
+                  <>
+                    <button
+                      className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors"
+                      onClick={() => startEditing(product)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
+                      onClick={() => handleDeleteProduct(product._id)}
+                    >
+                      Delete
+                    </button>
+                  </>
+                )}
+              </div>
+          
+              {user ? (
+                <button
+                  className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
+                  onClick={() => handleAddToCart(product._id)}
+                >
+                  Add to Cart
+                </button>
+              ) : (
+                <p className="text-red-500">Log in to add products to cart</p>
               )}
             </div>
-          );
-        })}
+          </div>                
+        ))}
       </div>
     </div>
   );

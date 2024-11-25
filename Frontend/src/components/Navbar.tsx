@@ -3,6 +3,7 @@ import { AuthContext } from "../contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 
+
 const Navbar: React.FC = () => {
   const { user, roles, setUser } = useContext(AuthContext);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -30,6 +31,13 @@ const Navbar: React.FC = () => {
         {user && (
           <Link to="/products" className="text-white hover:text-gray-300">
             Products
+          </Link>
+        )}
+
+        {/* Cart Icon, visible only to logged-in users */}
+        {user && (
+          <Link to="/cart" className="text-white hover:text-gray-300">
+            Cart
           </Link>
         )}
 

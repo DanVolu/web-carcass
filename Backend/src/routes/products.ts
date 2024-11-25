@@ -18,4 +18,6 @@ router.post("/products/:id/like", authenticate, productController.likeProduct);
 router.post("/products/:id/unlike", authenticate, productController.unlikeProduct);
 
 
+
+
 export default router;

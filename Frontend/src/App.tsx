@@ -13,6 +13,8 @@ import LoginForm from "./forms/LoginForm";
 import RegisterForm from "./forms/RegisterForm";
 import SettingsPage from "./pages/SettingsPage";
 import ProductsPage from "./pages/ProductsPage";
+import CartPage from "./pages/Checkout";
+
 
 const App: React.FC = () => {
   return (
@@ -22,6 +24,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/login" element={<LoginForm />} />
           <Route path="/register" element={<RegisterForm />} />
+          <Route path="/cart" element ={<CartPage />} />
 
           {/* Protect routes inside the ProtectedLayout */}
           <Route element={<ProtectedLayout />}>
