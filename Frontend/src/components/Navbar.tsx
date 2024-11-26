@@ -1,10 +1,10 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 
 const Navbar: React.FC = () => {
-  const { user, roles, setUser } = useContext(AuthContext);
+  const { user, roles, setUser, refresh } = useContext(AuthContext); // Add refresh from context
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -12,6 +12,7 @@ const Navbar: React.FC = () => {
     axios
       .post("http://localhost:7000/api/v1/auth/logout", {}, { withCredentials: true })
       .then(() => {
+        setDropdownOpen(false); // Collapse the dropdown
         setUser(null); // Clear the user from context
         navigate("/login");
       })
@@ -19,6 +20,11 @@ const Navbar: React.FC = () => {
         console.error("Error logging out:", error);
       });
   };
+
+  // Close the dropdown if the user logs out or when refresh changes
+  useEffect(() => {
+    setDropdownOpen(false);
+  }, [refresh, user]);
 
   return (
     <nav className="flex justify-between items-center px-6 py-4 bg-blue-600 text-white relative">

@@ -151,7 +151,6 @@ const ProductsPage: React.FC = () => {
         { withCredentials: true }
       );
   
-      alert("Product added to cart successfully!");
     } catch (err: any) {
       console.error("Error adding product to cart:", err.response?.data?.message || err.message);
       alert("Failed to add product to cart. Please try again.");

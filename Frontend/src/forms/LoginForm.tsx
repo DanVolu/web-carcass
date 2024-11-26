@@ -9,7 +9,7 @@ const LoginForm: React.FC = () => {
   const [errors, setErrors] = useState<string[]>([]); // Updated to handle multiple errors
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { setUser } = useContext(AuthContext);
+  const { setUser, setRefresh } = useContext(AuthContext);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +24,8 @@ const LoginForm: React.FC = () => {
       );
 
       if (response.status === 200) {
-        setUser(email);
+        setUser(email, response.data.roles); // Update user and roles
+        setRefresh(); // Trigger refresh for Navbar
         navigate("/");
       }
     } catch (err: any) {
