@@ -1,6 +1,7 @@
 import express from "express";
 import usersRoutes from "./users"; // Import user-related routes
 import authRoutes from "./auth"; // Import authentication-related routes
+import cartRoutes from "./cart";
 import productRoutes from "./products";
 import loggerMiddleware from "../middlewares/loggerMiddleware"; // Logger middleware (optional)
 
@@ -12,5 +13,6 @@ const router = express.Router();
 router.use("/users", loggerMiddleware, usersRoutes);
 router.use("/auth", loggerMiddleware, authRoutes);
 router.use("/products", loggerMiddleware, productRoutes);
+router.use("/cart", loggerMiddleware, cartRoutes);
 
 export default router;

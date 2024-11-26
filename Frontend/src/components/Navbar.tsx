@@ -33,6 +33,13 @@ const Navbar: React.FC = () => {
           </Link>
         )}
 
+        {/* Cart Icon, visible only to logged-in users */}
+        {user && (
+          <Link to="/cart" className="text-white hover:text-gray-300">
+            Cart
+          </Link>
+        )}
+
         {/* Settings visible to admins */}
         {user && roles.includes("admin") && (
           <Link to="/settings" className="text-white hover:text-gray-300">

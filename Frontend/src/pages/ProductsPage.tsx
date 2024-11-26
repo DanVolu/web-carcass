@@ -143,6 +143,21 @@ const ProductsPage: React.FC = () => {
     }
   };
 
+  const handleAddToCart = async (productId: string) => {
+    try {
+      await axios.post(
+        "http://localhost:7000/api/v1/cart/cart/add",
+        { productId, quantity: 1 },
+        { withCredentials: true }
+      );
+  
+      alert("Product added to cart successfully!");
+    } catch (err: any) {
+      console.error("Error adding product to cart:", err.response?.data?.message || err.message);
+      alert("Failed to add product to cart. Please try again.");
+    }
+  };
+
   const startEditing = (product: Product) => {
     setEditingId(product._id);
     setForm({
@@ -284,6 +299,16 @@ const ProductsPage: React.FC = () => {
                 ) : (
                   <p className="text-red-500">Log in to like products</p>
                 )}
+              {user ? (
+                <button
+                  className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
+                  onClick={() => handleAddToCart(product._id)}
+                >
+                  Add to Cart
+                </button>
+              ) : (
+                <p className="text-red-500">Log in to add products to cart</p>
+              )}
               </div>
               {isAdmin && (
                 <div className="mt-4 flex justify-between">
@@ -405,8 +430,17 @@ const ProductsPage: React.FC = () => {
                 </button>
               ) : (
                 <p className="text-red-500">Log in to like products</p>
+              )}            {user ? (
+                <button
+                  className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
+                  onClick={() => handleAddToCart(popupProduct._id)}
+                >
+                  Add to Cart
+                </button>
+              ) : (
+                <p className="text-red-500">Log in to add products to cart</p>
               )}
-            </div>
+            </div>             
             {isAdmin && (
               <div className="mt-4 flex justify-between">
                 <button
