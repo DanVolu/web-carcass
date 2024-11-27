@@ -13,6 +13,7 @@ import LoginForm from "./forms/LoginForm";
 import RegisterForm from "./forms/RegisterForm";
 import SettingsPage from "./pages/SettingsPage";
 import ProductsPage from "./pages/ProductsPage";
+import PurchasePage from "./pages/PurchasePage";
 import CartPage from "./pages/Checkout";
 
 const App: React.FC = () => {
@@ -28,7 +29,8 @@ const App: React.FC = () => {
           <Route element={<ProtectedLayout />}>
             <Route path="/" element={<MainPage />} />
             <Route path="/products" element={<ProductsPage />} />
-            <Route path="/cart" element ={<CartPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/cart/purchase" element={<PurchasePage />} />
           </Route>
 
           {/* Protect settings route for admin users */}

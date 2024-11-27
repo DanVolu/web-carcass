@@ -258,13 +258,13 @@ const ProductsPage: React.FC = () => {
         </form>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 ">
         {products.map((product) => {
           const isLiked = !!(user && product.usersLiked?.includes(user));
           return (
             <div
               key={product._id}
-              className="bg-white shadow-md rounded p-4 cursor-pointer"
+              className="bg-white shadow-md rounded p-4 cursor-pointer border border-gray-300"
               onClick={() => openPopup(product)}
             >
               <img
@@ -277,7 +277,7 @@ const ProductsPage: React.FC = () => {
                   e.currentTarget.src = "https://via.placeholder.com/150"; // Fallback to placeholder
                 }}
               />
-              <h2 className="text-xl font-bold">{product.name}</h2>
+              <h2 className="text-xl font-bold ">{product.name}</h2>
               <p className="text-gray-600">{product.category}</p>
               <p className="text-gray-800 font-semibold">€{product.price}</p>
               <p className="text-gray-600">{product.size}</p>

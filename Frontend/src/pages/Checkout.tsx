@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 interface CartItem {
   productId: string;
-  name: string;
+  name: string; // Product name
+  image: string; // Product image
   price: number;
   quantity: number;
 }
@@ -19,6 +21,7 @@ const CartPage: React.FC = () => {
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const apiUrl = "http://localhost:7000/api/v1/cart";
 
@@ -101,15 +104,23 @@ const CartPage: React.FC = () => {
             key={item.productId}
             className="flex items-center justify-between bg-white p-4 shadow rounded-lg"
           >
-            <div>
-              <h2 className="text-lg font-semibold">{item.name}</h2>
-              <p>Price: ${item.price}</p>
-              <p>Quantity: {item.quantity}</p>
+            <div className="flex items-center space-x-4">
+              <img
+                src={item.image}
+                alt={item.name}
+                className="w-16 h-16 object-cover rounded"
+              />
+              <div>
+                <h2 className="text-lg font-semibold">{item.name}</h2>
+                <p>Price: ${item.price}</p>
+                <p>Quantity: {item.quantity}</p>
+                <p>Total: ${(item.quantity * item.price).toFixed(2)}</p>
+              </div>
             </div>
             <div className="flex space-x-4">
               <button
                 className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                onClick={() =>  handleAddToCart(item.productId)}
+                onClick={() => handleAddToCart(item.productId)}
               >
                 Add More
               </button>
@@ -133,6 +144,12 @@ const CartPage: React.FC = () => {
           onClick={handleClearCart}
         >
           Clear Cart
+        </button>
+        <button
+          className="bg-blue-500 text-white px-6 py-3 mt-4 rounded hover:bg-blue-600 ml-4"
+          onClick={() => navigate("/cart/purchase")}
+        >
+          Proceed to Self Checkout
         </button>
       </div>
     </div>
