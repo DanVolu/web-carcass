@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 // Define the interface for a cart item
 export interface CartInterface extends Document {
   productId: string; // Add productId field
+  name: string; // Add product name field
   quantity: number;
   price: number; // Add price field if needed for cart calculations
 }
@@ -12,6 +13,10 @@ export const cartItemSchema: Schema<CartInterface> = new Schema({
   productId: {
     type: String,
     required: true,
+  },
+  name: {
+    type: String,
+    required: true, // Added name field
   },
   quantity: {
     type: Number,
@@ -24,10 +29,10 @@ export const cartItemSchema: Schema<CartInterface> = new Schema({
   },
 });
 
-
 // Updated CartItemInterface
 export interface CartItemInterface {
   productId: mongoose.Schema.Types.ObjectId; // Use ObjectId for referencing Product
+  name: string; // Add product name field
   quantity: number;
   total: mongoose.Types.Decimal128;
 }

@@ -29,9 +29,10 @@ const cartController = {
       } else {
         user.cart.items.push({
           productId,
-          quantity,
+          name: product.name, // Include the product name here
           price: product.price,
-        } as any); // Cast as `any` if needed for TypeScript compatibility
+          quantity,
+        } as any);
       }
 
       user.cart.count = user.cart.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -99,23 +100,22 @@ const cartController = {
   // Get cart details
   getCart: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const user = await User.findById(req.user.id).populate("cart.items.productId");
+      const user = await User.findById(req.user.id);
       if (!user) {
         return res.status(404).json({ message: "User not found." });
       }
-  
-      // Convert Decimal128 fields to numbers
+
       const cart = {
         ...user.cart,
         subtotal: parseFloat(user.cart.subtotal?.toString() || "0"),
         total: parseFloat(user.cart.total?.toString() || "0"),
       };
-  
+
       res.status(200).json({ cart });
     } catch (err) {
       next(err);
     }
-  } 
+  },
 };
 
 export default cartController;
