@@ -19,7 +19,7 @@ const PurchasePage: React.FC = () => {
 
   const fetchCartTotal = async () => {
     try {
-      const { data } = await axios.get("http://localhost:7000/api/v1/cart", { withCredentials: true });
+      const { data } = await axios.get("http://localhost:7000/api/v1/cart/cart", { withCredentials: true });
       setTotalPrice(data.cart.total);
     } catch (err: any) {
       setError("Error fetching total price. Please try again.");
