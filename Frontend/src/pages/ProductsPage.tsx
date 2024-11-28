@@ -341,76 +341,84 @@ const ProductsPage: React.FC = () => {
           const isLiked = !!(user && product.usersLiked?.includes(user));
           return (
             <div
-              key={product._id}
-              className="bg-white shadow-md rounded p-4 cursor-pointer border border-gray-300"
-              onClick={() => openPopup(product)}
-            >
-              <img
-                src={product.image.startsWith("/uploads/")
-                  ? `http://localhost:7000${product.image}`
-                  : product.image}
-                alt={product.name}
-                className="w-full h-49 object-cover rounded mb-4"
-                onError={(e) => {
-                  e.currentTarget.src = "https://via.placeholder.com/150"; // Fallback to placeholder
-                }}
-              />
-              <h2 className="text-xl font-bold">{product.name}</h2>
-              <p className="text-gray-600">{product.category}</p>
-              <p className="text-gray-800 font-semibold">€{product.price}</p>
-              <p className="text-gray-600">{product.size}</p>
-              <p className="text-sm text-gray-500">{product.description}</p>
-              <div className="flex items-center justify-between mt-4">
-                <p className="text-gray-700">Likes: {product.liked}</p>
-                {user ? (
-                  <button
-                    className={`px-4 py-2 rounded ${
-                      isLiked ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"
-                    } text-white`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleLikeToggle(product._id, isLiked);
-                    }}
-                  >
-                    {isLiked ? "Unlike" : "Like"}
-                  </button>
-                ) : (
-                  <p className="text-red-500">Log in to like products</p>
-                )}
-                {user ? (
-                  <button
-                    className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
-                    onClick={() => handleAddToCart(product._id)}
-                  >
-                    Add to Cart
-                  </button>
-                ) : (
-                  <p className="text-red-500">Log in to add products to cart</p>
-                )}
-              </div>
-              {isAdmin && (
-                <div className="mt-4 flex justify-between">
-                  <button
-                    className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      startEditing(product);
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setConfirmDeleteProduct(product);
-                    }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
-            </div>
+  key={product._id}
+  className="bg-white shadow-md rounded p-4 cursor-pointer border border-gray-300 relative"
+  onClick={() => openPopup(product)}
+>
+  <img
+    src={product.image.startsWith("/uploads/")
+      ? `http://localhost:7000${product.image}`
+      : product.image}
+    alt={product.name}
+    className="w-full h-49 object-cover rounded mb-4"
+    onError={(e) => {
+      e.currentTarget.src = "https://via.placeholder.com/150"; // Fallback to placeholder
+    }}
+  />
+  <h2 className="text-xl font-bold">{product.name}</h2>
+  <p className="text-gray-600">{product.category}</p>
+  <p className="text-gray-800 font-semibold">€{product.price}</p>
+  <p className="text-gray-600">{product.size}</p>
+  <p className="text-sm text-gray-500">{product.description}</p>
+  <div className="flex justify-between items-start mt-4">
+    {/* Left Side: Edit and Delete Buttons */}
+    {isAdmin && (
+      <div className="flex flex-col items-start space-y-2 mt-[0.6rem]">
+        <button
+          className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent parent onClick
+            startEditing(product);
+          }}
+        >
+          Edit
+        </button>
+        <button
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent parent onClick
+            setConfirmDeleteProduct(product);
+          }}
+        >
+          Delete
+        </button>
+      </div>
+    )}
+
+    {/* Right Side: Like and Add to Cart Buttons */}
+    <div className="flex flex-col items-end space-y-2">
+      {user ? (
+        <button
+          className={`px-4 py-2 rounded ${
+            isLiked ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"
+          } text-white`}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent parent onClick
+            handleLikeToggle(product._id, isLiked);
+          }}
+        >
+          {isLiked ? "Unlike" : "Like"}
+        </button>
+      ) : (
+        <p className="text-red-500">Log in to like products</p>
+      )}
+      {user ? (
+        <button
+          className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent parent onClick
+            handleAddToCart(product._id);
+          }}
+        >
+          Add to Cart
+        </button>
+      ) : (
+        <p className="text-red-500">Log in to add products to cart</p>
+      )}
+    </div>
+  </div>
+</div>
+
           );
         })}
       </div>

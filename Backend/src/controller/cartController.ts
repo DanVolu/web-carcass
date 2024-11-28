@@ -47,6 +47,45 @@ const cartController = {
     }
   },
 
+
+  decreaseQuantity: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const { productId } = req.body;
+
+      if (!productId) {
+        return res.status(400).json({ message: "Product ID is required." });
+      }
+
+      const user = await User.findById(req.user.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+
+      const cartItem = user.cart.items.find(item => item.productId === productId);
+
+      if (!cartItem) {
+        return res.status(404).json({ message: "Item not found in cart." });
+      }
+
+      cartItem.quantity -= 1;
+
+      if (cartItem.quantity <= 0) {
+        user.cart.items = user.cart.items.filter(item => item.productId !== productId);
+      }
+
+      // Update cart totals
+      user.cart.count = user.cart.items.reduce((sum, item) => sum + item.quantity, 0);
+      user.cart.subtotal = user.cart.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
+      user.cart.total = user.cart.subtotal; // Adjust total as needed
+
+      await user.save();
+
+      res.status(200).json({ message: "Item quantity decreased", cart: user.cart });
+    } catch (err) {
+      next(err);
+    }
+  },
+
   // Remove item from cart
   removeFromCart: async (req: Request, res: Response, next: NextFunction) => {
     try {
