@@ -21,6 +21,7 @@ interface ValidationError {
 
 const ProductsPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [form, setForm] = useState({
     name: "",
@@ -35,8 +36,12 @@ const ProductsPage: React.FC = () => {
   const [confirmDeleteProduct, setConfirmDeleteProduct] = useState<Product | null>(null); // State for delete confirmation
   const [, setErrors] = useState<ValidationError[]>([]);
   const { user } = useContext(AuthContext); // Get user from AuthContext
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null); // Sorting state
 
   const apiUrl = "http://localhost:7000/api/v1/products/products";
+
+  const categories = ["Category 1", "Category 2", "Category 3", "Category 4"];
 
   // Fetch products and user role
   useEffect(() => {
@@ -44,6 +49,7 @@ const ProductsPage: React.FC = () => {
       try {
         const { data } = await axios.get(apiUrl, { withCredentials: true });
         setProducts(data);
+        setFilteredProducts(data);
 
         const userResponse = await axios.get("http://localhost:7000/api/v1/auth/status", {
           withCredentials: true,
@@ -57,6 +63,19 @@ const ProductsPage: React.FC = () => {
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    let updatedProducts = [...products];
+    if (selectedCategory) {
+      updatedProducts = updatedProducts.filter((product) => product.category === selectedCategory);
+    }
+    if (sortOrder) {
+      updatedProducts.sort((a, b) =>
+        sortOrder === "asc" ? a.price - b.price : b.price - a.price
+      );
+    }
+    setFilteredProducts(updatedProducts);
+  }, [selectedCategory, sortOrder, products]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
@@ -66,6 +85,14 @@ const ProductsPage: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       setForm({ ...form, image: e.target.files[0] });
     }
+  };
+
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory((prevCategory) => (prevCategory === category ? null : category));
+  };
+
+  const handleSortOrderChange = (order: "asc" | "desc") => {
+    setSortOrder(order === sortOrder ? null : order);
   };
 
   const handleAddOrEditProduct = async (e: React.FormEvent) => {
@@ -150,7 +177,7 @@ const ProductsPage: React.FC = () => {
         { productId, quantity: 1 },
         { withCredentials: true }
       );
-  
+
       alert("Product added to cart successfully!");
     } catch (err: any) {
       console.error("Error adding product to cart:", err.response?.data?.message || err.message);
@@ -188,6 +215,7 @@ const ProductsPage: React.FC = () => {
     <div className="p-4 md:p-8">
       <h1 className="text-3xl font-bold mb-4">Products</h1>
 
+
       {isAdmin && (
         <form className="bg-white shadow-md rounded p-4 mb-6" onSubmit={handleAddOrEditProduct}>
           <h2 className="text-xl font-bold mb-4">{editingId ? "Edit Product" : "Add Product"}</h2>
@@ -200,14 +228,22 @@ const ProductsPage: React.FC = () => {
               placeholder="Name"
               required
             />
-            <input
+            <select
               className="p-2 border rounded"
               name="category"
               value={form.category}
-              onChange={handleInputChange}
-              placeholder="Category"
+              onChange={(e) => setForm({ ...form, category: e.target.value })}
               required
-            />
+            >
+              <option value="" disabled>
+                Select Category
+              </option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
             <input
               className="p-2 border rounded"
               name="price"
@@ -258,8 +294,51 @@ const ProductsPage: React.FC = () => {
         </form>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 ">
-        {products.map((product) => {
+      <div className="flex justify-start mb-6">
+        {categories.map((category) => (
+          <button
+            key={category}
+            className={`px-4 py-2 rounded mr-2 ${
+              selectedCategory === category
+                ? "bg-blue-500 text-white"
+                : "bg-gray-300 text-gray-800 hover:bg-gray-400"
+            }`}
+            onClick={() => handleCategorySelect(category)}
+          >
+            {category}
+          </button>
+        ))}
+        {selectedCategory && (
+          <button
+            className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600"
+            onClick={() => setSelectedCategory(null)}
+          >
+            Clear Filter
+          </button>
+        )}
+      </div>
+
+      <div className="flex justify-start mb-6">
+        <button
+          className={`px-4 py-2 rounded mr-2 ${
+            sortOrder === "asc" ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-800 hover:bg-gray-400"
+          }`}
+          onClick={() => handleSortOrderChange("asc")}
+        >
+          Price: Low to High
+        </button>
+        <button
+          className={`px-4 py-2 rounded ${
+            sortOrder === "desc" ? "bg-blue-500 text-white" : "bg-gray-300 text-gray-800 hover:bg-gray-400"
+          }`}
+          onClick={() => handleSortOrderChange("desc")}
+        >
+          Price: High to Low
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredProducts.map((product) => {
           const isLiked = !!(user && product.usersLiked?.includes(user));
           return (
             <div
@@ -268,8 +347,8 @@ const ProductsPage: React.FC = () => {
               onClick={() => openPopup(product)}
             >
               <img
-                src={product.image.startsWith("/uploads/") 
-                  ? `http://localhost:7000${product.image}` 
+                src={product.image.startsWith("/uploads/")
+                  ? `http://localhost:7000${product.image}`
                   : product.image}
                 alt={product.name}
                 className="w-full h-49 object-cover rounded mb-4"
@@ -277,7 +356,7 @@ const ProductsPage: React.FC = () => {
                   e.currentTarget.src = "https://via.placeholder.com/150"; // Fallback to placeholder
                 }}
               />
-              <h2 className="text-xl font-bold ">{product.name}</h2>
+              <h2 className="text-xl font-bold">{product.name}</h2>
               <p className="text-gray-600">{product.category}</p>
               <p className="text-gray-800 font-semibold">€{product.price}</p>
               <p className="text-gray-600">{product.size}</p>
@@ -299,16 +378,16 @@ const ProductsPage: React.FC = () => {
                 ) : (
                   <p className="text-red-500">Log in to like products</p>
                 )}
-              {user ? (
-                <button
-                  className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
-                  onClick={() => handleAddToCart(product._id)}
-                >
-                  Add to Cart
-                </button>
-              ) : (
-                <p className="text-red-500">Log in to add products to cart</p>
-              )}
+                {user ? (
+                  <button
+                    className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
+                    onClick={() => handleAddToCart(product._id)}
+                  >
+                    Add to Cart
+                  </button>
+                ) : (
+                  <p className="text-red-500">Log in to add products to cart</p>
+                )}
               </div>
               {isAdmin && (
                 <div className="mt-4 flex justify-between">
@@ -386,8 +465,8 @@ const ProductsPage: React.FC = () => {
               ✖
             </button>
             <img
-              src={popupProduct.image.startsWith("/uploads/") 
-                ? `http://localhost:7000${popupProduct.image}` 
+              src={popupProduct.image.startsWith("/uploads/")
+                ? `http://localhost:7000${popupProduct.image}`
                 : popupProduct.image}
               alt={popupProduct.name}
               className="w-full h-65 object-cover rounded mb-4"
@@ -430,7 +509,8 @@ const ProductsPage: React.FC = () => {
                 </button>
               ) : (
                 <p className="text-red-500">Log in to like products</p>
-              )}            {user ? (
+              )}
+              {user ? (
                 <button
                   className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors"
                   onClick={() => handleAddToCart(popupProduct._id)}
@@ -440,7 +520,7 @@ const ProductsPage: React.FC = () => {
               ) : (
                 <p className="text-red-500">Log in to add products to cart</p>
               )}
-            </div>             
+            </div>
             {isAdmin && (
               <div className="mt-4 flex justify-between">
                 <button
